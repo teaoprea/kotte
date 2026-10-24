@@ -31,6 +31,12 @@ namespace kotte
         std::size_t enemy_turns = 0;
     };
 
+    enum RoundState {
+        Playing,
+        Won,
+        Lost 
+    };
+
     class Application final{
     public:
         Application(
@@ -157,6 +163,7 @@ namespace kotte
         CollisionDiagnostics collision_diagnostics_;
         std::uint64_t seed_;
         EntityHandle player_handle_;
+        RoundState round_state_ = RoundState::Playing;
         bool exit_requested_ = false;
     };
 }

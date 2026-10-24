@@ -395,6 +395,19 @@ namespace kotte
         camera_.set_centre(player().world_position);
     }
 
+    const char* round_state_name(RoundState state) {
+        switch (state) {
+        case RoundState::Playing:
+            return "Playing";
+        case RoundState::Won:
+            return "Won";
+        case RoundState::Lost:
+            return "Lost";
+        }
+        return "Unknown";
+
+    }
+   
     void Application::render(){
         Frame frame{background_color_};
 
@@ -546,6 +559,7 @@ namespace kotte
         DrawText(diagnostics.c_str(), 10, window_.height() - 54, 20, RAYWHITE);
 
         DrawText("move: WASD/arrows | bomb: Space | quit: Q/Escape", 10, window_.height() - 30, 20, LIGHTGRAY);
+        DrawText(std::format("Round: {}", round_state_name(round_state_)).c_str(), 10, 130, 20, RAYWHITE);
     }
 
     void Application::populate_entities(){
