@@ -52,6 +52,7 @@ namespace kotte
         update_gameplay(delta_time);
         update_timed_gameplay(delta_time);
         resolve_gameplay_facts();
+        apply_player_hits();
         apply_structural_mutations();
         update_presentation(delta_time);
         render();
@@ -62,6 +63,7 @@ namespace kotte
         assert(place_bomb_requests_.empty());
         assert(bomb_detonated_facts_.empty());
         assert(destroy_entity_requests_.empty());
+        assert(player_hit_facts_.empty());
         frame_actions_ = {};
         collision_diagnostics_ = {};
     }
@@ -152,6 +154,18 @@ namespace kotte
         }
 
         bomb_detonated_facts_.clear();
+    }
+
+    void Application::apply_player_hits() {
+        if (player_hit_facts_.empty()) {
+            return;
+        }
+
+        if (round_state_ == RoundState::Playing) {
+            round_state_ = RoundState::Lost;
+        }
+
+        player_hit_facts_.clear();
     }
 
     void Application::apply_structural_mutations(){
@@ -361,7 +375,7 @@ namespace kotte
                 blocked_by_crate = true;
                 break;
             case EntityKind::player:
-                // Player-hit consequences are outside the Week 6 lifetime seam.
+                player_hit_facts_.push_back({ PlayerHit::Source::Blast });
                 break;
             }
         }

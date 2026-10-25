@@ -70,6 +70,11 @@ namespace kotte
             std::uint8_t blast_range = 0;
         };
 
+        struct PlayerHit final {
+            enum class Source {Blast, Enemy};
+            Source source = Source::Blast;
+        };
+
         struct DestroyEntityRequest final {
             EntityHandle entity;
         };
@@ -85,6 +90,7 @@ namespace kotte
         void update_gameplay(float delta_time);
         void update_timed_gameplay(float delta_time);
         void resolve_gameplay_facts();
+        void apply_player_hits();
         void apply_structural_mutations();
         void update_presentation(float delta_time);
         void update_player(float delta_time);
@@ -158,6 +164,7 @@ namespace kotte
         FrameActions frame_actions_;
         std::vector<PlaceBombRequest> place_bomb_requests_;
         std::vector<BombDetonated> bomb_detonated_facts_;
+        std::vector<PlayerHit> player_hit_facts_;
         std::vector<DestroyEntityRequest> destroy_entity_requests_;
         std::vector<BlastEffect> blast_effects_;
         CollisionDiagnostics collision_diagnostics_;
