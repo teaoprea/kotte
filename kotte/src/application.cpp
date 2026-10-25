@@ -49,12 +49,14 @@ namespace kotte
         // boundaries visible as the simulation grows.
         begin_frame();
         collect_frame_actions();
-        update_gameplay(delta_time);
-        detect_enemy_contact();
-        update_timed_gameplay(delta_time);
-        resolve_gameplay_facts();
-        apply_player_hits();
-        apply_structural_mutations();
+        if (round_state_ == RoundState::Playing) {
+            update_gameplay(delta_time);
+            detect_enemy_contact();
+            update_timed_gameplay(delta_time);
+            resolve_gameplay_facts();
+            apply_player_hits();
+            apply_structural_mutations();
+        }
         update_presentation(delta_time);
         render();
     }
