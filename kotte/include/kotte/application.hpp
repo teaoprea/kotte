@@ -93,6 +93,7 @@ namespace kotte
         void resolve_gameplay_facts();
         void apply_player_hits();
         void apply_structural_mutations();
+        void update_round_outcome();
         void update_presentation(float delta_time);
         void update_player(float delta_time);
         void try_move_player(Vector2 axis_displacement);
@@ -168,6 +169,8 @@ namespace kotte
         std::vector<PlayerHit> player_hit_facts_;
         std::vector<DestroyEntityRequest> destroy_entity_requests_;
         std::vector<BlastEffect> blast_effects_;
+        static constexpr std::size_t enemies_to_defeat_ = 2;
+        std::size_t initial_enemy_count_ = 0;
         CollisionDiagnostics collision_diagnostics_;
         std::uint64_t seed_;
         EntityHandle player_handle_;

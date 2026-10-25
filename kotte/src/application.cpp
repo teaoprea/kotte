@@ -26,6 +26,7 @@ namespace kotte
             , seed_{ seed } {
         populate_entities();
         initialize_enemies();
+        initial_enemy_count_ = enemy_handles_.size();
     }
 
     void Application::run() {
@@ -56,6 +57,7 @@ namespace kotte
             resolve_gameplay_facts();
             apply_player_hits();
             apply_structural_mutations();
+            update_round_outcome();
         }
         update_presentation(delta_time);
         render();
@@ -201,6 +203,16 @@ namespace kotte
         // Entity storage and every derived index change only at this boundary.
         apply_entity_destructions();
         apply_bomb_placements();
+    }
+
+    void Application::update_round_outcome() {
+        if (round_state_ != RoundState::Playing) {
+            return;
+        }
+        const std::size_t defeated_enemies = initial_enemy_count_ - enemy_handles_.size();
+        if (defeated_enemies >= enemies_to_defeat_) {
+            round_state_ = RoundState::Won;
+        }
     }
 
     void Application::update_presentation(float delta_time){
@@ -603,6 +615,18 @@ namespace kotte
 
         DrawText("move: WASD/arrows | bomb: Space | quit: Q/Escape", 10, window_.height() - 30, 20, LIGHTGRAY);
         DrawText(std::format("Round: {}", round_state_name(round_state_)).c_str(), 10, 130, 20, RAYWHITE);
+
+        const std::size_t defeated_enemies = initial_enemy_count_ - enemy_handles_.size();
+        DrawText(
+            std::format("Objective: defeat {} enemies ({}/{})",
+                enemies_to_defeat_, defeated_enemies, enemies_to_defeat_).c_str(),
+            10, 154, 20, RAYWHITE);
+        if (round_state_ == RoundState::Won) {
+            DrawText("YOU WIN", window_.width() / 2 - 80, window_.height() / 2, 40, GREEN);
+        }
+        else if (round_state_ == RoundState::Lost) {
+            DrawText("YOU LOST", window_.width() / 2 - 90, window_.height() / 2, 40, RED);
+        }
     }
 
     void Application::populate_entities(){
