@@ -89,6 +89,7 @@ namespace kotte
         void collect_frame_actions() noexcept;
         void update_gameplay(float delta_time);
         void update_timed_gameplay(float delta_time);
+        void detect_enemy_contact();
         void resolve_gameplay_facts();
         void apply_player_hits();
         void apply_structural_mutations();

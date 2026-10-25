@@ -9,32 +9,32 @@
 #include <utility>
 
 namespace kotte
-{    
+{
     Application::Application(
         int width,
         int height,
         std::string_view title,
         std::uint64_t seed,
         int target_fps)
-        : window_{width, height, title, target_fps}
-        , camera_{window_.size()}
-        , random_{seed}
-        , map_{make_room(200, 120, random_)}
-        , spatial_grid_{{
+        : window_{ width, height, title, target_fps }
+        , camera_{ window_.size() }
+        , random_{ seed }
+        , map_{ make_room(200, 120, random_) }
+        , spatial_grid_{ {
             static_cast<float>(map_.width() * tile_size_),
-            static_cast<float>(map_.height() * tile_size_)}, spatial_cell_size_}
-        , seed_{seed}{
+            static_cast<float>(map_.height() * tile_size_)}, spatial_cell_size_ }
+            , seed_{ seed } {
         populate_entities();
         initialize_enemies();
     }
 
-    void Application::run(){
-        while(!window_.should_close() && !exit_requested_){
+    void Application::run() {
+        while (!window_.should_close() && !exit_requested_) {
             run_frame(GetFrameTime());
         }
     }
 
-    void Application::run_frame(float delta_time){
+    void Application::run_frame(float delta_time) {
         // Full frame order:
         // 1. Reset frame-local state.
         // 2. Translate input into gameplay intent.
@@ -50,6 +50,7 @@ namespace kotte
         begin_frame();
         collect_frame_actions();
         update_gameplay(delta_time);
+        detect_enemy_contact();
         update_timed_gameplay(delta_time);
         resolve_gameplay_facts();
         apply_player_hits();
@@ -58,7 +59,7 @@ namespace kotte
         render();
     }
 
-    void Application::begin_frame() noexcept{
+    void Application::begin_frame() noexcept {
         // Every request must be consumed by the previous frame's mutation phase.
         assert(place_bomb_requests_.empty());
         assert(bomb_detonated_facts_.empty());
@@ -68,51 +69,51 @@ namespace kotte
         collision_diagnostics_ = {};
     }
 
-    void Application::collect_frame_actions() noexcept{
-        if(IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_Q)){
+    void Application::collect_frame_actions() noexcept {
+        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_Q)) {
             request_exit();
         }
         frame_actions_.place_bomb = IsKeyPressed(KEY_SPACE);
 
         Vector2& movement_direction = frame_actions_.player_movement_direction;
-        if(IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)){
+        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
             movement_direction.x -= 1.0f;
         }
-        if(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)){
+        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
             movement_direction.x += 1.0f;
         }
-        if(IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)){
+        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) {
             movement_direction.y -= 1.0f;
         }
-        if(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)){
+        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) {
             movement_direction.y += 1.0f;
         }
 
         // Normalize intent before simulation so bindings cannot change movement speed.
-        if(movement_direction.x != 0.0f || movement_direction.y != 0.0f){
+        if (movement_direction.x != 0.0f || movement_direction.y != 0.0f) {
             movement_direction = Vector2Normalize(movement_direction);
         }
     }
 
-    void Application::update_gameplay(float delta_time){
+    void Application::update_gameplay(float delta_time) {
         // The player and every enemy are movers; each asks its own collision question.
         update_player(delta_time);
         update_enemies(delta_time);
         queue_bomb_placement();
     }
 
-    void Application::update_timed_gameplay(float delta_time){
+    void Application::update_timed_gameplay(float delta_time) {
         // This list is independent of camera queries, so off-screen fuses advance.
-        for(const EntityHandle bomb_handle : active_bomb_handles_){
+        for (const EntityHandle bomb_handle : active_bomb_handles_) {
             Entity* bomb = entities_.try_get(bomb_handle);
-            if(bomb == nullptr || !bomb->bomb_state.has_value()
-                || bomb->bomb_state->detonation_requested){
+            if (bomb == nullptr || !bomb->bomb_state.has_value()
+                || bomb->bomb_state->detonation_requested) {
                 continue;
             }
 
             BombState& state = *bomb->bomb_state;
             state.fuse_remaining -= delta_time;
-            if(state.fuse_remaining > 0.0f){
+            if (state.fuse_remaining > 0.0f) {
                 continue;
             }
 
@@ -126,12 +127,12 @@ namespace kotte
                 state.owner,
                 bomb->world_position,
                 state.blast_range
-            });
+                });
         }
     }
 
-    void Application::resolve_gameplay_facts(){
-        for(const BombDetonated& fact : bomb_detonated_facts_){
+    void Application::resolve_gameplay_facts() {
+        for (const BombDetonated& fact : bomb_detonated_facts_) {
             BlastEffect effect;
             effect.remaining_seconds = blast_effect_seconds_;
             effect.tile_centres.reserve(static_cast<std::size_t>(fact.blast_range) * 4 + 1);
@@ -139,11 +140,11 @@ namespace kotte
             const float tile_extent = static_cast<float>(tile_size_);
             const int origin_column = static_cast<int>(std::floor(fact.world_position.x / tile_extent));
             const int origin_row = static_cast<int>(std::floor(fact.world_position.y / tile_extent));
-            (void) resolve_blast_tile(effect, origin_column, origin_row);
+            (void)resolve_blast_tile(effect, origin_column, origin_row);
 
             // The detonating bomb must disappear even if its presentation or
             // collision bounds change independently of blast-tile detection.
-            destroy_entity_requests_.push_back({fact.bomb});
+            destroy_entity_requests_.push_back({ fact.bomb });
 
             append_blast_ray(effect, origin_column, origin_row, 0, -1, fact.blast_range);
             append_blast_ray(effect, origin_column, origin_row, 1, 0, fact.blast_range);
@@ -166,6 +167,32 @@ namespace kotte
         }
 
         player_hit_facts_.clear();
+    }
+
+    void Application::detect_enemy_contact() {
+        const Rectangle player_bounds = entity_collision_bounds(player());
+        constexpr float enemy_contact_margin = 2.0f;
+
+        Rectangle hurt_bound = {
+            player_bounds.x - enemy_contact_margin,
+            player_bounds.y - enemy_contact_margin,
+            player_bounds.width + enemy_contact_margin * 2.0f,
+            player_bounds.height + enemy_contact_margin * 2.0f
+        };
+
+        const SpatialQuery contacts = spatial_grid_.query(hurt_bound);
+        for (const EntityHandle handle : contacts.entity_handles) {
+            const Entity* candidate = entities_.try_get(handle);
+            if (candidate == nullptr || !CheckCollisionRecs(hurt_bound, entity_collision_bounds(*candidate))) {
+                continue;
+            }
+            if (candidate->kind != EntityKind::enemy) {
+                continue;
+            }
+            player_hit_facts_.push_back({ PlayerHit::Source::Enemy });
+            break;
+            
+        }
     }
 
     void Application::apply_structural_mutations(){
