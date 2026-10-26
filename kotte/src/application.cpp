@@ -50,6 +50,9 @@ namespace kotte
         // boundaries visible as the simulation grows.
         begin_frame();
         collect_frame_actions();
+        if (round_state_ != RoundState::Playing && IsKeyPressed(KEY_R)) {
+            restart_round();
+        }
         if (round_state_ == RoundState::Playing) {
             update_gameplay(delta_time);
             detect_enemy_contact();
@@ -627,6 +630,10 @@ namespace kotte
         else if (round_state_ == RoundState::Lost) {
             DrawText("YOU LOST", window_.width() / 2 - 90, window_.height() / 2, 40, RED);
         }
+        DrawText(
+            std::format("enemies alive: {} (started with {})",
+                enemy_handles_.size(), initial_enemy_count_).c_str(),
+            10, 178, 20, RAYWHITE);
     }
 
     void Application::populate_entities(){
@@ -664,6 +671,35 @@ namespace kotte
                 }
             }
         }
+    }
+
+    void Application::restart_round() {
+        // Clear every entity and rebuild the world from scratch
+        const float whole_map_width = static_cast<float>(map_.width() * tile_size_);
+        const float whole_map_height = static_cast<float>(map_.height() * tile_size_);
+        Rectangle whole_map_rect{ 0.0f, 0.0f, whole_map_width,whole_map_height };
+
+        //Clear the pending lists
+        place_bomb_requests_.clear();
+        const SpatialQuery all_entities = spatial_grid_.query(whole_map_rect);
+        for (const EntityHandle handle : all_entities.entity_handles) {
+            destroy_entity_requests_.push_back({ handle });
+        }
+
+        apply_entity_destructions();
+        bomb_detonated_facts_.clear();
+        player_hit_facts_.clear();
+        blast_effects_.clear();
+
+        //Reset the random generator from seed
+        random_ = Random{ seed_ };
+        map_ = make_room(200, 120, random_);
+
+        populate_entities();
+        initialize_enemies();
+        initial_enemy_count_ = enemy_handles_.size();
+        round_state_ = RoundState::Playing;
+        camera_ = Camera{ window_.size() };
     }
 
     void Application::initialize_enemies(){

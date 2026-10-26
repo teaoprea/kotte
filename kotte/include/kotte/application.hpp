@@ -115,6 +115,7 @@ namespace kotte
         void update_camera(float delta_time) noexcept;
         void render();
         void populate_entities();
+        void restart_round();
         void initialize_enemies();
         [[nodiscard]] Entity& entity(EntityHandle handle) noexcept;
         [[nodiscard]] const Entity& entity(EntityHandle handle) const noexcept;
