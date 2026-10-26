@@ -1,14 +1,14 @@
 # Bomberman World — [your game title]
 
-**Student:** [your name]
+**Student:** Maria-Teodora Oprea 
 
 > Replace the prompts below and remove these instructions. Keep answers brief. Your implementation explanations and reflection belong in the presentation; you do not need to write them out here. Complete the final section only if seeking Pass with Distinction (VG).
 
 ## How to play
 
-- **Controls:** [movement, bombs, restart, and any extension controls]
-- **Objective and rules:** [how to win/lose; which result wins if both happen together; any extension rules needed to understand the game]
-- **Configurations / demo setup:** [how to select gameplay/stress configurations and use any special setup or debug keys; write “default” where appropriate]
+- **Controls:** WASD keys to move, SPACE to place a bomb, R to restart after a win or loss, Q OR ESCAPE to quit.
+- **Objective and rules:** Defeat 25 enemies to win. Lose if a blast or an enemy touches you. If both happen in the same frame, the loss wins.
+- **Configurations / demo setup:** Defaul.
 
 ## Features and validation
 
@@ -18,24 +18,20 @@ Use the practical checks in the assignment to validate the acceptance conditions
 
 | Feature | Check, observed result, and expected behaviour |
 | --- | --- |
-| 1. Player damage and death | [what I tested, what I observed, and whether it matched the expected behaviour] |
-| 2. Round states and objective | [what I tested, what I observed, and whether it matched the expected behaviour] |
-| 3. Safe restart | [what I tested, what I observed, and whether it matched the expected behaviour] |
+| 1. Player damage and death | I died once from my own bomb and once by walking into an enemy. Both set the round to Lost, as expected.|
+| 2. Round states and objective | I won the round by defeating 25 enemies. Was difficult but not impossible. When the game was lost or won, the world froze as expected and the message stayed on screen.|
+| 3. Safe restart | I restarted with R after a win and a loss and played normally. When a bomb was still active and i died by colliding with an enemy, by pressing R, everything reseted and i could continue playing without the blast from the bomb to appear.|
 | 4. Solid bombs with owner escape | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | 5. Blast-range pickup | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | [# and name of chosen extension 1] | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | [# and name of chosen extension 2] | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | [# and name of chosen extension 3] | [what I tested, what I observed, and whether it matched the expected behaviour] |
 
-Example: “I ended a round with live bombs and restarted three times to check that old-round state was cleared. No old explosions appeared, and bomb capacity reset each time.” Report your actual results, including any failures or remaining limitations; stating that something “works” does not describe a check.
-
-**Known issues:** [remaining problems and how to encounter them, or “None known after testing”]
+**Known issues:** None known after testing. 
 
 ## Sources and assistance
 
-This project builds on the shared Kotte foundations.
-
-[Briefly identify meaningful external code/resources, discussion or collaboration, and AI assistance. Link to sources where relevant, say what they contributed, and explain what you checked yourself. State “None beyond the course material” if applicable. No prompt transcript or activity diary is needed. Retain required licence/attribution notices.]
+This project builds on the shared Kotte foundations ( Week 6 reference). I used Claude as a tutor while working. I gave him the assignment and suggested a schedule i should keep up with, as i procrastinated a bit with this assignment. I ask him to explain some existing code and also gave hints on compiler errors. 
 
 ## Architectural investigation — VG only
 
