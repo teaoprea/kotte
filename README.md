@@ -1,4 +1,4 @@
-# Bomberman World — [your game title]
+# Bomberman World — Shabang
 
 **Student:** Maria-Teodora Oprea 
 
