@@ -806,6 +806,11 @@ namespace kotte
                 continue;
             }
 
+            if (candidate->kind == EntityKind::bomb && candidate->bomb_state->owner == moving_entity_handle
+                && CheckCollisionRecs(entity_collision_bounds(entity(moving_entity_handle)), entity_collision_bounds(*candidate))) {
+                continue;
+            }
+
             // Narrow phase: exact-test the remaining solid candidate.
             ++collision_diagnostics_.exact_tests;
             if(CheckCollisionRecs(proposed_collision_bounds, entity_collision_bounds(*candidate))){
@@ -822,9 +827,8 @@ namespace kotte
         case EntityKind::player:
         case EntityKind::crate:
         case EntityKind::enemy:
-            return true;
         case EntityKind::bomb:
-            return false;
+            return true;
         }
 
         return false;
