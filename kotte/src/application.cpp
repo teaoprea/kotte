@@ -325,7 +325,11 @@ namespace kotte
         for(const PlaceBombRequest& request : place_bomb_requests_){
             const Entity* owner = entities_.try_get(request.owner);
             if(owner == nullptr || owner->kind != EntityKind::player
-                || owner_has_active_bomb(request.owner)){
+                || owner_has_active_bomb(request.owner)) {
+                continue;
+            }
+
+            if (bomb_exists_at(request.world_position)) {
                 continue;
             }
 
@@ -865,6 +869,15 @@ namespace kotte
                 && bomb->bomb_state.has_value()
                 && bomb->bomb_state->owner == owner;
         });
+    }
+
+    bool Application::bomb_exists_at(Vector2 position) const noexcept {
+        return std::ranges::any_of(active_bomb_handles_, [this, position](EntityHandle bomb_handle) {
+            const Entity* bomb = entities_.try_get(bomb_handle);
+            return bomb != nullptr
+                && bomb->world_position.x == position.x
+                && bomb->world_position.y == position.y;
+            });
     }
 
     Vector2 Application::tile_centre(Vector2 world_position) noexcept{
