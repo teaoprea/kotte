@@ -56,6 +56,7 @@ namespace kotte
         if (round_state_ == RoundState::Playing) {
             update_gameplay(delta_time);
             detect_enemy_contact();
+            detect_pickup_contact();
             update_timed_gameplay(delta_time);
             resolve_gameplay_facts();
             apply_player_hits();
@@ -199,6 +200,28 @@ namespace kotte
             player_hit_facts_.push_back({ PlayerHit::Source::Enemy });
             break;
             
+        }
+    }
+
+    void Application::detect_pickup_contact() {
+        const Rectangle player_bounds = entity_collision_bounds(player());
+
+        const SpatialQuery contacts = spatial_grid_.query(player_bounds);
+        for (const EntityHandle handle : contacts.entity_handles) {
+            const Entity* candidate = entities_.try_get(handle);
+            if (candidate == nullptr) {
+                continue;
+            }
+            if (candidate->kind != EntityKind::power_up) {
+                continue;
+            }
+            if (!CheckCollisionRecs(player_bounds, entity_collision_bounds(*candidate))) {
+                continue;
+            }
+            destroy_entity_requests_.push_back({ handle });
+            player_blast_range_ = std::min<std::uint8_t>(
+                static_cast<std::uint8_t>(player_blast_range_ + 1), max_blast_range_);
+            break;
         }
     }
 
