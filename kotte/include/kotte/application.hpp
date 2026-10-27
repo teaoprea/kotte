@@ -155,6 +155,7 @@ namespace kotte
         static constexpr Color crate_color_{0xb0, 0x72, 0x3c, 0xff};
         static constexpr Color enemy_color_{0xd9, 0x4f, 0x70, 0xff};
         static constexpr Color wall_color_{0x78, 0x5f, 0x47, 0xff};
+        static constexpr Color power_up_color{0x4e, 0xd9, 0x6a, 0xff };
 
         Window window_; // Constructed first, destroyed last.
         Camera camera_;
@@ -178,5 +179,7 @@ namespace kotte
         EntityHandle player_handle_;
         RoundState round_state_ = RoundState::Playing;
         bool exit_requested_ = false;
+        std::uint8_t player_blast_range_ = bomb_blast_range_;
+        static constexpr std::uint8_t max_blast_range_ = 6;
     };
 }

@@ -339,7 +339,7 @@ namespace kotte
                 .bomb_state = BombState{
                     .owner = request.owner,
                     .fuse_remaining = bomb_fuse_seconds_,
-                    .blast_range = bomb_blast_range_
+                    .blast_range = player_blast_range_
                 }
             };
             const EntityHandle bomb_handle = entities_.create(bomb);
@@ -424,6 +424,8 @@ namespace kotte
                 break;
             case EntityKind::player:
                 player_hit_facts_.push_back({ PlayerHit::Source::Blast });
+                break;
+            case EntityKind::power_up:
                 break;
             }
         }
@@ -638,12 +640,21 @@ namespace kotte
             std::format("enemies alive: {} (started with {})",
                 enemy_handles_.size(), initial_enemy_count_).c_str(),
             10, 178, 20, RAYWHITE);
+        DrawText(
+            std::format("Range: {} (max {})",
+                static_cast<int>(player_blast_range_),
+                static_cast<int>(max_blast_range_)).c_str(),
+            10, 226, 20, RAYWHITE);
     }
 
     void Application::populate_entities(){
         // Match the generation density so initial creation does not repeatedly
         // relocate slot storage. Handles remain valid even if this estimate grows.
         entities_.reserve(map_.tile_count() / 4);
+
+        const Entity pickup{ EntityKind::power_up, {tile_size_ * 4.5f, tile_size_ * 2.5f} };
+        const EntityHandle pickup_handle = entities_.create(pickup);
+        spatial_grid_.insert(pickup_handle, entity_world_bounds(pickup));
 
         const Entity player_entity{EntityKind::player, {tile_size_ * 2.5f, tile_size_ * 2.5f}};
         player_handle_ = entities_.create(player_entity);
@@ -694,6 +705,7 @@ namespace kotte
         bomb_detonated_facts_.clear();
         player_hit_facts_.clear();
         blast_effects_.clear();
+        player_blast_range_ = bomb_blast_range_;
 
         //Reset the random generator from seed
         random_ = Random{ seed_ };
@@ -742,6 +754,7 @@ namespace kotte
         case EntityKind::player: size = {24.0f, 32.0f}; break;
         case EntityKind::bomb: size = {22.0f, 22.0f}; break;
         case EntityKind::crate: size = {36.0f, 48.0f}; break;
+        case EntityKind::power_up: size = { 22.0f, 22.0f }; break;
         case EntityKind::enemy: size = {28.0f, 30.0f}; break;
         }
 
@@ -758,6 +771,7 @@ namespace kotte
         case EntityKind::player: size = {20.0f, 16.0f}; break;
         case EntityKind::bomb: size = {18.0f, 12.0f}; break;
         case EntityKind::crate: size = {32.0f, 32.0f}; break;
+        case EntityKind::power_up: size = { 18.0f, 12.0f }; break; 
         case EntityKind::enemy: size = {24.0f, 14.0f}; break;
         }
 
@@ -826,15 +840,16 @@ namespace kotte
         return blocked;
     }
 
-    bool Application::is_solid(EntityKind kind) noexcept{
-        switch(kind){
+    bool Application::is_solid(EntityKind kind) noexcept {
+        switch (kind) {
         case EntityKind::player:
         case EntityKind::crate:
         case EntityKind::enemy:
         case EntityKind::bomb:
             return true;
+        case EntityKind::power_up:
+            return false;
         }
-
         return false;
     }
 
@@ -901,6 +916,7 @@ namespace kotte
         case EntityKind::bomb: return bomb_color_;
         case EntityKind::crate: return crate_color_;
         case EntityKind::enemy: return enemy_color_;
+        case EntityKind::power_up: return power_up_color;
         }
         return MAGENTA;
     }
