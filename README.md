@@ -21,8 +21,8 @@ Use the practical checks in the assignment to validate the acceptance conditions
 | 1. Player damage and death | I died once from my own bomb and once by walking into an enemy. Both set the round to Lost, as expected.|
 | 2. Round states and objective | I won the round by defeating 25 enemies. Was difficult but not impossible. When the game was lost or won, the world froze as expected and the message stayed on screen.|
 | 3. Safe restart | I restarted with R after a win and a loss and played normally. When a bomb was still active and i died by colliding with an enemy, by pressing R, everything reseted and i could continue playing without the blast from the bomb to appear.|
-| 4. Solid bombs with owner escape | [what I tested, what I observed, and whether it matched the expected behaviour] |
-| 5. Blast-range pickup | [what I tested, what I observed, and whether it matched the expected behaviour] |
+| 4. Solid bombs with owner escape | I placed a bomb, walked off it, and tried to re-enter: I was blocked.After detonation I could walk through the tile. An enemy walking into a bomb turned around. Pressing SPACE again on the occupied tile created no second bomb.|
+| 5. Blast-range pickup | I placed a bomb at range 3, collected the pickup (the HUD showed 4). then placed another bomb: only the new one had the longest blast. Returning to the pickup's tile did nothing. After a restart. the pickup was back and the range was 3.|
 | [# and name of chosen extension 1] | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | [# and name of chosen extension 2] | [what I tested, what I observed, and whether it matched the expected behaviour] |
 | [# and name of chosen extension 3] | [what I tested, what I observed, and whether it matched the expected behaviour] |
