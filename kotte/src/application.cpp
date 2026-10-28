@@ -348,7 +348,7 @@ namespace kotte
         for(const PlaceBombRequest& request : place_bomb_requests_){
             const Entity* owner = entities_.try_get(request.owner);
             if(owner == nullptr || owner->kind != EntityKind::player
-                || owner_has_active_bomb(request.owner)) {
+                || owner_bomb_counts(request.owner) >= max_bombs_per_owner) {
                 continue;
             }
 
@@ -668,6 +668,10 @@ namespace kotte
                 static_cast<int>(player_blast_range_),
                 static_cast<int>(max_blast_range_)).c_str(),
             10, 226, 20, RAYWHITE);
+        DrawText(
+            std::format("bombs: {} / {}",
+                owner_bomb_counts(player_handle_), max_bombs_per_owner).c_str(),
+            10, 250, 20, RAYWHITE);
     }
 
     void Application::populate_entities(){
@@ -900,13 +904,14 @@ namespace kotte
         return static_cast<CardinalDirection>(new_value);
     }
 
-    bool Application::owner_has_active_bomb(EntityHandle owner) const noexcept{
-        return std::ranges::any_of(active_bomb_handles_, [this, owner](EntityHandle bomb_handle){
+    std::size_t Application::owner_bomb_counts(EntityHandle owner) const noexcept{
+        return static_cast<std::size_t>(std::ranges::count_if(active_bomb_handles_, 
+            [this, owner](EntityHandle bomb_handle){
             const Entity* bomb = entities_.try_get(bomb_handle);
             return bomb != nullptr
                 && bomb->bomb_state.has_value()
                 && bomb->bomb_state->owner == owner;
-        });
+        }));
     }
 
     bool Application::bomb_exists_at(Vector2 position) const noexcept {
