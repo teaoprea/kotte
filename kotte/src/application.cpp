@@ -82,6 +82,7 @@ namespace kotte
             request_exit();
         }
         frame_actions_.place_bomb = IsKeyPressed(KEY_SPACE);
+        frame_actions_.active_shield = IsKeyPressed(KEY_H);
 
         Vector2& movement_direction = frame_actions_.player_movement_direction;
         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
@@ -108,6 +109,7 @@ namespace kotte
         update_player(delta_time);
         update_enemies(delta_time);
         queue_bomb_placement();
+        activate_shield();
     }
 
     void Application::update_timed_gameplay(float delta_time) {
@@ -136,6 +138,16 @@ namespace kotte
                 bomb->world_position,
                 state.blast_range
                 });
+        }
+
+        if (shield_remaining_ > 0.0f) {
+            shield_remaining_ = std::max(0.0f, shield_remaining_ - delta_time);
+            if (shield_remaining_ == 0) {
+                shield_cooldown_remaining_ = shield_cooldown_seconds_;
+            }
+        }
+        else {
+            shield_cooldown_remaining_ = std::max(0.0f, shield_cooldown_remaining_ - delta_time);
         }
     }
 
@@ -166,6 +178,12 @@ namespace kotte
     }
 
     void Application::apply_player_hits() {
+
+        if (shield_remaining_ > 0.0f) {
+            player_hit_facts_.clear();
+            return;
+        }
+
         if (player_hit_facts_.empty()) {
             return;
         }
@@ -374,6 +392,18 @@ namespace kotte
         }
 
         place_bomb_requests_.clear();
+    }
+
+    void Application::activate_shield() {
+        if (!frame_actions_.active_shield) {
+            return;
+        }
+        if (shield_remaining_ > 0.0f || shield_cooldown_remaining_ > 0.0f) {
+            return;
+        }
+
+        shield_remaining_ = shield_seconds_;
+        shield_cooldown_remaining_ = shield_cooldown_seconds_;
     }
 
     void Application::apply_entity_destructions(){
@@ -590,6 +620,20 @@ namespace kotte
         renderer_.sort();
         renderer_.execute();
 
+        if (shield_remaining_ > 0.0f) {
+            const Rectangle player_box = entity_world_bounds(player());
+            const Vector2 player_center = camera_.world_to_screen({
+                        player_box.x + player_box.width / 2.0f,
+                        player_box.y + player_box.height / 2.0f
+                });
+            DrawCircleLines(
+                static_cast<int>(player_center.x),
+                static_cast<int>(player_center.y),
+                22.0f,
+                SKYBLUE
+            );
+        }
+
         std::string diagnostics;
         const double percent_of_entities = entities_.live_count() == 0
             ? 0.0
@@ -672,6 +716,10 @@ namespace kotte
             std::format("bombs: {} / {}",
                 owner_bomb_counts(player_handle_), max_bombs_per_owner).c_str(),
             10, 250, 20, RAYWHITE);
+        DrawText(
+            std::format("Shield: {:.1f} s | cooldown: {:.1f} s",
+                shield_remaining_, shield_cooldown_remaining_).c_str(),
+            10, 274, 20, RAYWHITE);
     }
 
     void Application::populate_entities(){
@@ -743,6 +791,9 @@ namespace kotte
         initial_enemy_count_ = enemy_handles_.size();
         round_state_ = RoundState::Playing;
         camera_ = Camera{ window_.size() };
+
+        shield_remaining_ = 0.0f;
+        shield_cooldown_remaining_ = 0.0f;
     }
 
     void Application::initialize_enemies(){

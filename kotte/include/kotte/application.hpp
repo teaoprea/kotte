@@ -56,6 +56,7 @@ namespace kotte
         struct FrameActions final {
             Vector2 player_movement_direction{};
             bool place_bomb = false;
+            bool active_shield = false;
         };
 
         struct PlaceBombRequest final {
@@ -102,6 +103,7 @@ namespace kotte
         void queue_bomb_placement();
         void apply_entity_destructions();
         void apply_bomb_placements();
+        void activate_shield();
         [[nodiscard]] bool resolve_blast_tile(
             BlastEffect& effect,
             int column,
@@ -183,5 +185,11 @@ namespace kotte
         bool exit_requested_ = false;
         std::uint8_t player_blast_range_ = bomb_blast_range_;
         static constexpr std::uint8_t max_blast_range_ = 6;
+
+        static constexpr float shield_seconds_ = 5.0f;
+        static constexpr float shield_cooldown_seconds_ = 20.0f;
+        float shield_remaining_ = 0.0f;
+        float shield_cooldown_remaining_ = 0.0f;
+
     };
 }
