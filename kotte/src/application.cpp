@@ -149,6 +149,13 @@ namespace kotte
         else {
             shield_cooldown_remaining_ = std::max(0.0f, shield_cooldown_remaining_ - delta_time);
         }
+
+        if (combo_remaining_ > 0.0f) {
+            combo_remaining_ = std::max(0.0f, combo_remaining_ - delta_time);
+            if (combo_remaining_ == 0.0f) {
+                combo_multiplier_ = 1;
+            }
+        }
     }
 
     void Application::resolve_gameplay_facts() {
@@ -406,6 +413,18 @@ namespace kotte
         shield_cooldown_remaining_ = shield_cooldown_seconds_;
     }
 
+    void Application::award_kill() {
+        if (combo_remaining_ > 0.0f) {
+            combo_multiplier_ = std::min(combo_multiplier_ + 1, max_combo_multiplier_);
+        }
+        else {
+            combo_multiplier_ = 1;
+        }
+        score_ += kill_points_ * combo_multiplier_;
+        combo_remaining_ = combo_window_seconds_;
+
+    }
+
     void Application::apply_entity_destructions(){
         // A moving entity may overlap several blast tiles, and several bombs may
         // reach it in one frame. Canonicalizing requests makes that multiplicity
@@ -419,6 +438,10 @@ namespace kotte
             const Entity* doomed = entities_.try_get(request.entity);
             if(doomed == nullptr){
                 continue;
+            }
+
+            if (doomed->kind == EntityKind::enemy) {
+                award_kill();
             }
 
             // Spatial membership is derived from the live entity, so remove it
@@ -523,6 +546,16 @@ namespace kotte
         }
         return "Unknown";
 
+    }
+
+    void draw_text_right(const std::string& text, int y, Color colour, int screen_width) {
+        const int text_width = MeasureText(text.c_str(), 20);
+        DrawText(text.c_str(), screen_width - text_width - 10, y, 20, colour);
+    }
+
+    void draw_text_centered(const std::string& text, int y, int font_size, Color colour, int screen_width) {
+        const int text_width = MeasureText(text.c_str(), font_size);
+        DrawText(text.c_str(), (screen_width - text_width) / 2, y, font_size, colour);
     }
    
     void Application::render(){
@@ -647,6 +680,7 @@ namespace kotte
         const double broad_phase_reduction = naive_collision_work == 0.0
             ? 0.0
             : 100.0 * (1.0 - static_cast<double>(collision_diagnostics_.unique_candidates) / naive_collision_work);
+        const int screen_width = window_.width();
 
         DrawFPS(GetScreenWidth() - 100, 2);
 
@@ -693,33 +727,30 @@ namespace kotte
         DrawText(std::format("Round: {}", round_state_name(round_state_)).c_str(), 10, 130, 20, RAYWHITE);
 
         const std::size_t defeated_enemies = initial_enemy_count_ - enemy_handles_.size();
-        DrawText(
-            std::format("Objective: defeat {} enemies ({}/{})",
-                enemies_to_defeat_, defeated_enemies, enemies_to_defeat_).c_str(),
-            10, 154, 20, RAYWHITE);
+
         if (round_state_ == RoundState::Won) {
             DrawText("YOU WIN", window_.width() / 2 - 80, window_.height() / 2, 40, GREEN);
         }
         else if (round_state_ == RoundState::Lost) {
             DrawText("YOU LOST", window_.width() / 2 - 90, window_.height() / 2, 40, RED);
         }
-        DrawText(
-            std::format("enemies alive: {} (started with {})",
-                enemy_handles_.size(), initial_enemy_count_).c_str(),
-            10, 178, 20, RAYWHITE);
-        DrawText(
-            std::format("Range: {} (max {})",
-                static_cast<int>(player_blast_range_),
-                static_cast<int>(max_blast_range_)).c_str(),
-            10, 226, 20, RAYWHITE);
-        DrawText(
-            std::format("bombs: {} / {}",
-                owner_bomb_counts(player_handle_), max_bombs_per_owner).c_str(),
-            10, 250, 20, RAYWHITE);
-        DrawText(
-            std::format("Shield: {:.1f} s | cooldown: {:.1f} s",
-                shield_remaining_, shield_cooldown_remaining_).c_str(),
-            10, 274, 20, RAYWHITE);
+
+        draw_text_right(std::format("Shield: {:.1f} s | cooldown: {:.1f} s",
+            shield_remaining_, shield_cooldown_remaining_), 28, RAYWHITE, screen_width);
+        draw_text_right(std::format("Range: {} (max {})",
+            static_cast<int>(player_blast_range_), static_cast<int>(max_blast_range_)),
+            52, RAYWHITE, screen_width);
+        draw_text_right(std::format("Enemies alive: {}", enemy_handles_.size()),
+            76, RAYWHITE, screen_width);
+        draw_text_right(std::format("Objective: defeat {} enemies ({}/{})",
+            enemies_to_defeat_, defeated_enemies, enemies_to_defeat_),
+            100, RAYWHITE, screen_width);
+
+        const std::string combo_text = combo_remaining_ > 0.0f
+            ? std::format("  x{} ({:.1f} s)", combo_multiplier_, combo_remaining_)
+            : std::string{};
+        draw_text_centered(std::format("Score: {}{}", score_, combo_text),
+            10, 28, GOLD, screen_width);
     }
 
     void Application::populate_entities(){
@@ -794,6 +825,10 @@ namespace kotte
 
         shield_remaining_ = 0.0f;
         shield_cooldown_remaining_ = 0.0f;
+
+        score_ = 0;
+        combo_multiplier_ = 1;
+        combo_remaining_ = 0.0f;
     }
 
     void Application::initialize_enemies(){

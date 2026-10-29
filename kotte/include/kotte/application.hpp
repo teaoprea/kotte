@@ -104,6 +104,7 @@ namespace kotte
         void apply_entity_destructions();
         void apply_bomb_placements();
         void activate_shield();
+        void award_kill();
         [[nodiscard]] bool resolve_blast_tile(
             BlastEffect& effect,
             int column,
@@ -176,7 +177,7 @@ namespace kotte
         std::vector<PlayerHit> player_hit_facts_;
         std::vector<DestroyEntityRequest> destroy_entity_requests_;
         std::vector<BlastEffect> blast_effects_;
-        static constexpr std::size_t enemies_to_defeat_ = 2;
+        static constexpr std::size_t enemies_to_defeat_ = 20;
         std::size_t initial_enemy_count_ = 0;
         CollisionDiagnostics collision_diagnostics_;
         std::uint64_t seed_;
@@ -191,5 +192,12 @@ namespace kotte
         float shield_remaining_ = 0.0f;
         float shield_cooldown_remaining_ = 0.0f;
 
+        static constexpr int kill_points_ = 100;
+        static constexpr int max_combo_multiplier_ = 5;
+        static constexpr float combo_window_seconds_ = 3.0f;
+
+        int  score_ = 0;
+        int combo_multiplier_ = 1;
+        float combo_remaining_ = 0.0f;
     };
 }
