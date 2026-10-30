@@ -185,7 +185,7 @@ namespace kotte
         RoundState round_state_ = RoundState::Playing;
         bool exit_requested_ = false;
         std::uint8_t player_blast_range_ = bomb_blast_range_;
-        static constexpr std::uint8_t max_blast_range_ = 6;
+        static constexpr std::uint8_t max_blast_range_ = 4;
 
         static constexpr float shield_seconds_ = 5.0f;
         static constexpr float shield_cooldown_seconds_ = 20.0f;
